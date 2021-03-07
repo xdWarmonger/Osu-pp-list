@@ -56,7 +56,7 @@ class TbContent(RecycleView):
         super(TbContent, self).__init__(**kwargs)
         rows = len(usercache)
         self.data = [{'name': str(usercache[x].username),
-                      'rank': str(usercache[x].statistics.pp_rank),
+                      'rank': str(usercache[x].statistics.global_rank),
                       'pp': str(usercache[x].statistics.pp),
                       'acc': str(usercache[x].statistics.hit_accuracy),
                       'country_code': str(usercache[x].country.code)
