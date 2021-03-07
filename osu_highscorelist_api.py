@@ -4,17 +4,12 @@ from types import SimpleNamespace
 import os
 from dotenv import load_dotenv
 from kivy.app import App
-from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.recycleview import RecycleView
-from kivy.uix.recycleview.views import RecycleDataViewBehavior
-from kivy.uix.label import Label
 from kivy.uix.popup import Popup
 from kivy.properties import StringProperty
 from kivy.config import Config
 
-
-# Config.set('graphics', 'resizable', False)
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 
 
@@ -65,7 +60,7 @@ class TbContent(RecycleView):
     def refresh(self):
         rows = len(usercache)
         self.data = [{'name': str(usercache[x].username),
-                      'rank': str(usercache[x].statistics.pp_rank),
+                      'rank': str(usercache[x].statistics.global_rank),
                       'pp': str(usercache[x].statistics.pp),
                       'acc': str(usercache[x].statistics.hit_accuracy),
                       'country_code': str(usercache[x].country.code)
