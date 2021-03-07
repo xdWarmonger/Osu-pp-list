@@ -1,0 +1,2 @@
+@Echo off
+pyinstaller -w -F -i G:\Programmieren\Programme\PP-Highscoreliste\osu.ico G:\Programmieren\Programme\PP-Highscoreliste\Osu_Highscorelist.py
