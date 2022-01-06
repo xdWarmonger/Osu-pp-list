@@ -127,3 +127,5 @@ if __name__ == '__main__':
     usercache = []
     players_to_add = ['/users/Whitecat/', '/users/Umbre/', '/users/xXVivagoXx/']
     main()
+
+    # create dataclasses for players
