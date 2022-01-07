@@ -1,3 +1,5 @@
+from tkinter import filedialog
+from tkinter import Tk
 import requests
 import json
 from types import SimpleNamespace
@@ -11,6 +13,26 @@ from kivy.properties import StringProperty
 from kivy.config import Config
 
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
+
+
+class Osuapi:
+    def __init__(self):
+        # Get Client-Credentials access token from osu api
+        load_dotenv()
+        client_secret = os.getenv('client_secret')
+        p_data = {'client_id': '4675', 'client_secret': client_secret,
+                  'grant_type': 'client_credentials', 'scope': 'public'}
+        p = requests.post('https://osu.ppy.sh/oauth/token/', json=p_data)
+        self.client_credentials = json.loads(p.text, object_hook=lambda d: SimpleNamespace(**d))
+
+    def api_request(self, request_link):
+        r_headers = {'Content_Type': 'application/x-www-form-urlencoded',
+                     'Authorization': 'Bearer ' + self.client_credentials.access_token}
+        r = requests.get('https://osu.ppy.sh/api/v2' + request_link, headers=r_headers, params={'scope': 'public'})
+        tmp = None
+        if r.status_code == 200:
+            tmp = json.loads(r.text, object_hook=lambda d: SimpleNamespace(**d))
+        return tmp
 
 
 class RecycleViewRow(BoxLayout):
@@ -28,14 +50,32 @@ class Window(BoxLayout):
         self.add_widget(BottomMenu())
         return self.root
 
-    def save(self):
-        print('saving...')
+    @staticmethod
+    def save():
+        file = filedialog.asksaveasfile(mode="w", defaultextension=".txt", filetypes=[('Textfile', '.txt')])
+        if file:
+            for x in App.get_running_app().usercache:
+                file.write("/users/" + str(x.id) + "/\n")
 
-    def load(self):
-        print('loading...')
+    @staticmethod
+    def load():
+        # noinspection PyBroadException
+        try:
+            file = filedialog.askopenfile(mode="r", filetypes=[('Textfile', '.txt')])
+            id_list = []
+            for line in file:
+                id_list.append(line.rstrip())
+            App.get_running_app().usercache = []
+            App.get_running_app().load_from_file(id_list)
+        except Exception:
+            pass
 
-    def add_player(self):
+    @staticmethod
+    def add_player():
         PlayerPopup().open()
+
+    def refresh(self):
+        self.ids['table_content'].refresh()
 
 
 class Menu(BoxLayout):
@@ -49,15 +89,10 @@ class BottomMenu(BoxLayout):
 class TbContent(RecycleView):
     def __init__(self, **kwargs):
         super(TbContent, self).__init__(**kwargs)
-        rows = len(usercache)
-        self.data = [{'name': str(usercache[x].username),
-                      'rank': str(usercache[x].statistics.global_rank),
-                      'pp': str(usercache[x].statistics.pp),
-                      'acc': str(usercache[x].statistics.hit_accuracy),
-                      'country_code': str(usercache[x].country.code)
-                      } for x in range(rows)]
+        self.refresh()
 
     def refresh(self):
+        usercache = App.get_running_app().usercache
         rows = len(usercache)
         self.data = [{'name': str(usercache[x].username),
                       'rank': str(usercache[x].statistics.global_rank),
@@ -70,8 +105,8 @@ class TbContent(RecycleView):
 class PlayerPopup(Popup):
     error = StringProperty()
 
-    def on_error(self, lbl, text):
-        if text:
+    def on_error(self, lbl, error_text):
+        if error_text:
             self.lb_error.size_hint_y = 1
             self.size = (400, 150)
         else:
@@ -80,12 +115,18 @@ class PlayerPopup(Popup):
             self.size = (400, 120)
 
     def _enter(self):
-        if not self.text:
-            self.error = "Error: enter username"
+        text = self.ids['input'].text
+        if not text:
+            self.error = "Error: Enter a username before pressing 'Enter'"
         else:
-            Osuapi().api_request('/users/' + str(self.text) + '/')
-            TbContent().refresh()
-            self.dismiss()
+            status = App.get_running_app().add_user(text)
+            if status == 0:
+                self.error = f"User '{text}' successfully added"
+                self.ids['input'].text = ""
+            elif status == 1:
+                self.error = f"User '{text}' not found"
+            elif status == 2:
+                self.error = f"User '{text}' already in list"
 
     def _cancel(self):
         self.dismiss()
@@ -93,39 +134,47 @@ class PlayerPopup(Popup):
 
 class ListGuiApp(App):
     title = "Vivago's Highscorelist"
+    o = Osuapi()
+    usercache = []
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.window = None
+
+    def load_from_file(self, id_list):
+        for i in id_list:
+            tmp = self.o.api_request(i)
+            if tmp is not None:
+                self.usercache.append(tmp)
+                self.window.refresh()
 
     def build(self):
-        return Window()
+        self.window = Window()
+        return self.window
 
-
-class Osuapi:
-    def __init__(self):
-        # Get Client-Credentials access token from osu api
-        load_dotenv()
-        client_secret = os.getenv('client_secret')
-        p_data = {'client_id': '4675', 'client_secret': client_secret,
-                  'grant_type': 'client_credentials', 'scope': 'public'}
-        p = requests.post('https://osu.ppy.sh/oauth/token/', json=p_data)
-        self.client_credentials = json.loads(p.text, object_hook=lambda d: SimpleNamespace(**d))
-
-    def api_request(self, request_link):
-        r_headers = {'Content_Type': 'application/x-www-form-urlencoded',
-                     'Authorization': 'Bearer ' + self.client_credentials.access_token}
-        r = requests.get('https://osu.ppy.sh/api/v2' + request_link, headers=r_headers, params={'scope': 'public'})
-        user_json = json.loads(r.text, object_hook=lambda d: SimpleNamespace(**d))
-        usercache.append(user_json)
+    def add_user(self, name):
+        """returns an int.
+        0 if api request was successful
+        1 if api request returns an error
+        2 if user already exists in table"""
+        success = 1
+        if any(x.username == name for x in self.usercache):
+            success = 2
+        if success != 2:
+            tmp = App.get_running_app().o.api_request(f'/users/{name}/')
+            if tmp is not None:
+                self.usercache.append(tmp)
+                success = 0
+            self.window.refresh()
+        return success
 
 
 def main():
-    for i in players_to_add:
-        o.api_request(i)
+    Tk().withdraw()
     ListGuiApp().run()
 
 
 if __name__ == '__main__':
-    o = Osuapi()
-    usercache = []
-    players_to_add = ['/users/Whitecat/', '/users/Umbre/', '/users/xXVivagoXx/']
     main()
 
     # create dataclasses for players

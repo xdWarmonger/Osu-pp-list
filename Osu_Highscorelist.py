@@ -45,19 +45,19 @@ def save():
 
 def load():
     global finished_entry
-    global labelloadet
+    global labelloaded
     global players
     filename_load = filedialog.askopenfilename()
     if filename_load:
         players = np.load(filename_load)
         button_load.destroy()
-        labelloadet = Label(window, text="Loaded!")
-        labelloadet.grid(column=1, row=2)
+        labelloaded = Label(window, text="Loaded!")
+        labelloaded.grid(column=1, row=2)
 
 
 def load1():
     global finished_entry
-    global labelloadet
+    global labelloaded
     global players
     global button_reload
     global create_table
@@ -66,8 +66,8 @@ def load1():
         players = np.load(filename_load)
         button_load.destroy()
         finished_entry = True
-        labelloadet = Label(window, text="Loaded!")
-        labelloadet.pack(padx=20, side=LEFT)
+        labelloaded = Label(window, text="Loaded!")
+        labelloaded.pack(padx=20, side=LEFT)
         button_reload = Button(window, text="Reload Highscorelist", command=entries)
         button_reload.pack(padx=20, side=LEFT)
         create_table = False
@@ -109,7 +109,7 @@ def entries():
         pass
 
     try:
-        labelloadet.destroy()
+        labelloaded.destroy()
     except NameError:
         pass
 
