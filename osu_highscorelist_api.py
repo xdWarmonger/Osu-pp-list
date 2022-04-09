@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- encoding: utf-8
+
 from tkinter import filedialog
 from tkinter import Tk
 import requests
@@ -11,6 +14,8 @@ from kivy.uix.recycleview import RecycleView
 from kivy.uix.popup import Popup
 from kivy.properties import StringProperty
 from kivy.config import Config
+import pandas as pd
+import tabloo
 
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 
@@ -31,7 +36,7 @@ class Osuapi:
         r = requests.get('https://osu.ppy.sh/api/v2' + request_link, headers=r_headers, params={'scope': 'public'})
         tmp = None
         if r.status_code == 200:
-            tmp = json.loads(r.text, object_hook=lambda d: SimpleNamespace(**d))
+            tmp = r.json()
         return tmp
 
 
@@ -71,6 +76,15 @@ class Window(BoxLayout):
             pass
 
     @staticmethod
+    def startup():
+        with open('D:/Users/Vincent/Documents/test1.txt') as file:
+            id_list = []
+            for line in file:
+                id_list.append(line.rstrip())
+            App.get_running_app().usercache = []
+            App.get_running_app().load_from_file(id_list)
+
+    @staticmethod
     def add_player():
         PlayerPopup().open()
 
@@ -87,18 +101,29 @@ class BottomMenu(BoxLayout):
 
 
 class TbContent(RecycleView):
-    def __init__(self, **kwargs):
-        super(TbContent, self).__init__(**kwargs)
-        self.refresh()
 
     def refresh(self):
         usercache = App.get_running_app().usercache
+
+        '''df = pd.json_normalize(usercache)
+        print(usercache[0])
+        test_keys = ('username', 'statistics.global_rank', 'statistics.pp', 'statistics.hit_accuracy', 'country.code')
+        tmp = []
+        for i in range(len(usercache)):
+            tmp_dict = {}
+            for key in test_keys:
+                item = df.at[i, key]
+                tmp_dict[key] = item
+            tmp.append(tmp_dict)
+        self.data = tmp
+        # print(tmp)'''
+
         rows = len(usercache)
-        self.data = [{'name': str(usercache[x].username),
-                      'rank': str(usercache[x].statistics.global_rank),
-                      'pp': str(usercache[x].statistics.pp),
-                      'acc': str(usercache[x].statistics.hit_accuracy),
-                      'country_code': str(usercache[x].country.code)
+        self.data = [{'name': str(usercache[x]['username']),
+                      'rank': str(usercache[x]['statistics']['global_rank']),
+                      'pp': str(usercache[x]['statistics']['pp']),
+                      'acc': str(usercache[x]['statistics']['hit_accuracy']),
+                      'country_code': str(usercache[x]['country']['code'])
                       } for x in range(rows)]
 
 
@@ -146,19 +171,20 @@ class ListGuiApp(App):
             tmp = self.o.api_request(i)
             if tmp is not None:
                 self.usercache.append(tmp)
-                self.window.refresh()
+        self.window.refresh()
 
     def build(self):
         self.window = Window()
+        Window().startup()
         return self.window
 
     def add_user(self, name):
-        """returns an int.
-        0 if api request was successful
-        1 if api request returns an error
+        """returns an int: \n
+        0 if api request was successful \n
+        1 if api request returns an error \n
         2 if user already exists in table"""
         success = 1
-        if any(x.username == name for x in self.usercache):
+        if any(x['username'].lower() == name.lower() for x in self.usercache):
             success = 2
         if success != 2:
             tmp = App.get_running_app().o.api_request(f'/users/{name}/')
@@ -176,5 +202,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-    # create dataclasses for players

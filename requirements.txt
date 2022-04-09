@@ -2,3 +2,5 @@ Kivy~=2.0.0
 numpy~=1.19.5
 requests~=2.25.1
 python-dotenv~=0.15.0
+pandas~=1.3.5
+tabloo~=0.0.15

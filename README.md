@@ -7,7 +7,7 @@ You need to register an OAuth application on the osu website:
 Account -> Settings -> scroll down -> create new OAuth -> name it (you don't need a callback url).  
 Then you need to create a .env file in the same location as the program with the content "client secret:'your_client_secret'"
 
-### To Do:
+### ToDo:
 - improve gui
 - automatically load in save file when starting the program
 - pandas dataframe from user-jsons.
