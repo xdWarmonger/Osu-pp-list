@@ -8,9 +8,8 @@ Account -> Settings -> scroll down -> create new OAuth -> name it (you don't nee
 Then you need to create a .env file in the same location as the program with the content "client secret:'your_client_secret'"
 
 ### ToDo:
-- improve gui
-- automatically load in save file when starting the program
-- pandas dataframe from user-jsons.
+- improve gui (probably with Visual Studio based on .net)
+- find a way to display the player-jsons
   - right click-functionality (hide / show columns)
   - delete players from list
-
+- automatically load in save file when starting the program

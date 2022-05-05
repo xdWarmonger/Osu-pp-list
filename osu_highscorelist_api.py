@@ -14,8 +14,8 @@ from kivy.uix.recycleview import RecycleView
 from kivy.uix.popup import Popup
 from kivy.properties import StringProperty
 from kivy.config import Config
-import pandas as pd
-import tabloo
+# import pandas as pd
+# import tabloo
 
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 
