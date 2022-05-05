@@ -31,7 +31,7 @@ class Osuapi:
         self.client_credentials = json.loads(p.text, object_hook=lambda d: SimpleNamespace(**d))
 
     def api_request(self, request_link):
-        r_headers = {'Content_Type': 'application/x-www-form-urlencoded',
+        r_headers = {'Content_Type': 'application/json',
                      'Authorization': 'Bearer ' + self.client_credentials.access_token}
         r = requests.get('https://osu.ppy.sh/api/v2' + request_link, headers=r_headers, params={'scope': 'public'})
         tmp = None
